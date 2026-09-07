@@ -50,36 +50,33 @@
     </section>
 
     <section id="game" class="panel game hidden">
-      <div class="scoreboard">
-        <div class="score-card a" id="cardA">
-          <div class="team-name" id="liveNameA">Joueur 1</div>
-          <div class="score" id="scoreA">0</div>
-        </div>
-        <div class="score-card b" id="cardB">
-          <div class="team-name" id="liveNameB">Joueur 2</div>
-          <div class="score" id="scoreB">0</div>
-        </div>
-      </div>
-
       <div class="meta-row">
         <div class="pill" id="modeText">Tête-à-tête</div>
         <div class="pill">⏱ <strong id="timer">00:00:00</strong></div>
         <div class="pill" id="endCount">0 mène</div>
       </div>
 
-      <div class="teams-grid">
-        <div class="team-column">
+      <div class="team-split">
+        <div class="team-column a-col">
+          <div class="score-card a" id="cardA">
+            <div class="team-name" id="liveNameA">Joueur 1</div>
+            <div class="score" id="scoreA">0</div>
+          </div>
           <div class="pad-title a" id="padNameA">Joueur 1</div>
           <div class="points" id="padA"></div>
         </div>
 
-        <div class="team-column">
+        <div class="team-column b-col">
+          <div class="score-card b" id="cardB">
+            <div class="team-name" id="liveNameB">Joueur 2</div>
+            <div class="score" id="scoreB">0</div>
+          </div>
           <div class="pad-title b" id="padNameB">Joueur 2</div>
           <div class="points" id="padB"></div>
         </div>
       </div>
 
-      <div class="mid-actions">
+      <div class="encoding-actions">
         <button class="action null" id="nullBtn">⊖ Mène nulle</button>
         <button class="action" id="undoBtn">↶ Annuler</button>
       </div>
@@ -125,7 +122,7 @@
   </div>
 
 <script>
-const KEY = 'petanqueScore.v043';
+const KEY = 'petanqueScore.v044';
 
 let state = {
   mode: 'Tête-à-tête',

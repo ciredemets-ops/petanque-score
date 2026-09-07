@@ -1,5 +1,5 @@
-const CACHE='petanque-score-v021';
-const ASSETS=['./','./index.html','./styles.css','./app.js','./manifest.json','./icons/icon.svg'];
+const CACHE='petanque-score-v022';
+const ASSETS=['./','./index.html','./styles.css','./manifest.json','./icons/icon.svg'];
 self.addEventListener('install',e=>{
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));

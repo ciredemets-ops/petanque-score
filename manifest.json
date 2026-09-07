@@ -4,8 +4,8 @@
   "description": "Marqueur de score pétanque autonome et hors ligne.",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#f8f5ef",
-  "theme_color": "#071b33",
+  "background_color": "#ead8b2",
+  "theme_color": "#0c2441",
   "orientation": "any",
   "icons": [
     {

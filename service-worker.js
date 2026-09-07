@@ -1,5 +1,5 @@
-const CACHE='petanque-score-v042';
-const ASSETS=['./','./index.html','./styles.css','./manifest.json','./icons/icon.svg','./bg-dolomie.svg'];
+const CACHE='petanque-score-v043';
+const ASSETS=['./','./index.html','./styles.css','./manifest.json','./icons/icon.svg','./bg-marbre.svg'];
 
 self.addEventListener('install', event => {
   self.skipWaiting();

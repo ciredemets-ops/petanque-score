@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#071c34">
+  <meta name="theme-color" content="#0c2441">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Pétanque Score">
@@ -17,7 +17,7 @@
     <header class="topbar">
       <div class="brand">
         <img src="icons/icon.svg" alt="Logo Pétanque Score">
-        <div>
+        <div class="brand-text">
           <h1>Pétanque Score</h1>
           <p>Simple • rapide • hors ligne</p>
         </div>
@@ -61,28 +61,30 @@
         </div>
       </div>
 
-      <div class="meta-bar">
-        <span id="modeText">Tête-à-tête</span>
-        <span>⏱ <strong id="timer">00:00:00</strong></span>
-        <span id="endCount">0 mène</span>
+      <div class="meta-row">
+        <div class="pill" id="modeText">Tête-à-tête</div>
+        <div class="pill">⏱ <strong id="timer">00:00:00</strong></div>
+        <div class="pill" id="endCount">0 mène</div>
       </div>
 
-      <div class="pads">
-        <div class="pad-box a">
-          <div class="pad-title" id="padNameA">Joueur 1</div>
+      <div class="teams-grid">
+        <div class="team-column">
+          <div class="pad-title a" id="padNameA">Joueur 1</div>
           <div class="points" id="padA"></div>
         </div>
-        <div class="pad-box b">
-          <div class="pad-title" id="padNameB">Joueur 2</div>
+
+        <div class="team-column">
+          <div class="pad-title b" id="padNameB">Joueur 2</div>
           <div class="points" id="padB"></div>
         </div>
       </div>
 
-      <div class="null-wrap">
+      <div class="mid-actions">
         <button class="action null" id="nullBtn">⊖ Mène nulle</button>
+        <button class="action" id="undoBtn">↶ Annuler</button>
       </div>
 
-      <div class="history compact-history">
+      <div class="history">
         <div class="history-head">
           <span>2 dernières mènes</span>
           <span>↶ annulable</span>
@@ -90,8 +92,7 @@
         <div class="ends" id="history"></div>
       </div>
 
-      <div class="actions">
-        <button class="action" id="undoBtn">↶ Annuler</button>
+      <div class="bottom-actions">
         <button class="action save" id="saveBtn">💾 Enregistrer</button>
         <button class="action reset" id="resetBtn">⟳ Reset</button>
       </div>
@@ -113,9 +114,9 @@
         </div>
       </div>
 
-      <div class="meta-bar victory-meta">
-        <span id="finalTime"></span>
-        <span id="finalEnds"></span>
+      <div class="meta-row victory-meta">
+        <div class="pill" id="finalTime"></div>
+        <div class="pill" id="finalEnds"></div>
       </div>
 
       <button id="rematchBtn" class="primary">↻ Revanche</button>
@@ -124,7 +125,7 @@
   </div>
 
 <script>
-const KEY = 'petanqueScore.v042';
+const KEY = 'petanqueScore.v043';
 
 let state = {
   mode: 'Tête-à-tête',

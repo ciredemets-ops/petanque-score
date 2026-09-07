@@ -124,7 +124,6 @@ $('finalEnds').textContent=state.history.length + (state.history.length>1?' mèn
 $('finalTime').textContent=$('timer').textContent;
 show('victory'); saveLocal();
 }
-}
 function show(id){['setup','game','victory'].forEach(x=>$(x).classList.toggle('hidden',x!==id));}
 function render(){
 const dispA=formatDisplayName(state.nameA,'Joueur 1',state.mode);

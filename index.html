@@ -1,29 +1,450 @@
-<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#081c33"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Pétanque Score"><link rel="manifest" href="manifest.json"><link rel="icon" href="icons/icon.svg" type="image/svg+xml"><title>Pétanque Score</title><link rel="stylesheet" href="styles.css"></head><body><div class="app"><header class="top"><div class="brand"><img src="icons/icon.svg" alt="Logo Pétanque Score"><div><h1>Pétanque Score</h1><small>Simple • rapide • hors ligne</small></div></div><div class="badge" id="status">Chargement…</div></header><main><section id="setup" class="screen panel"><h2>Nouvelle partie</h2><div class="sub">Choisissez le format puis encodez les prénoms séparés par /</div><div class="modes"><button class="mode active" data-mode="Tête-à-tête">Tête-à-tête<br><small>1 joueur</small></button><button class="mode" data-mode="Doublette">Doublette<br><small>2 joueurs</small></button><button class="mode" data-mode="Triplette">Triplette<br><small>3 joueurs</small></button></div><div class="fields"><label class="field"><span class="dot blue"></span><input id="nameA" placeholder="Ex. Noah"></label><label class="field"><span class="dot gold"></span><input id="nameB" placeholder="Ex. Théo"></label></div><button id="startBtn" class="primary">▶ Commencer</button></section><section id="game" class="screen hidden"><div class="game-shell"><div class="scoreboard"><div class="score-card a" id="cardA"><div class="name" id="liveNameA">Joueur 1</div><div class="score" id="scoreA">0</div></div><div class="score-card b" id="cardB"><div class="name" id="liveNameB">Joueur 2</div><div class="score" id="scoreB">0</div></div></div><div class="meta compact-meta"><span><strong id="modeText">Tête-à-tête</strong></span><span>⏱ <strong id="timer">00:00:00</strong></span><span id="endCount">0 mène</span></div><div class="game-grid"><div class="team-pad a"><h3 id="padNameA">Joueur 1</h3><div class="points" id="padA"></div></div><div class="team-pad b"><h3 id="padNameB">Joueur 2</h3><div class="points" id="padB"></div></div></div><div class="history compact-history"><div class="history-head"><span>2 dernières mènes</span><span>↶ annulable</span></div><div class="ends" id="history"></div></div><div class="actions compact-actions"><button class="act" id="undoBtn">↶ Annuler</button><button class="act null" id="nullBtn">⊖ Mène nulle</button><button class="act save" id="saveBtn">💾 Enregistrer</button><button class="act reset" id="resetBtn">⟳ Reset</button></div></div></section><section id="victory" class="screen panel hidden victory"><div class="cup">🏆</div><div>Partie terminée</div><h2 id="winnerText">Victoire</h2><div class="final"><div><div class="n" id="finalNameA"></div><div class="s" id="finalScoreA"></div></div><div><div class="n" id="finalNameB"></div><div class="s" id="finalScoreB"></div></div></div><div class="meta"><span id="finalTime"></span><span id="finalEnds"></span></div><button class="primary" id="rematchBtn">↻ Revanche</button><button class="act" id="newBtn" style="width:100%;margin-top:8px">Nouvelle partie</button></section></main><div class="footer-note">Pétanque Score • sauvegarde automatique locale</div></div><script>
-const KEY='petanqueScore.v03';
-let state={mode:'Tête-à-tête',nameA:'',nameB:'',scoreA:0,scoreB:0,history:[],totalEnds:0,startedAt:null,running:false};
-const $=id=>document.getElementById(id);
-const saveLocal=()=>localStorage.setItem(KEY,JSON.stringify(state));
-function loadLocal(){try{const v=JSON.parse(localStorage.getItem(KEY)||'null');if(v)state={...state,...v};}catch(e){}}
-function expectedLines(mode){if(mode==='Doublette')return 2;if(mode==='Triplette')return 3;return 1;}
-function parseNames(value,mode){return String(value||'').split(/\r?\n|\s*[\/,;|+]\s*/g).map(s=>s.trim()).filter(Boolean).slice(0,expectedLines(mode));}
-function formatDisplayName(value,fallback,mode){const lines=parseNames(value,mode);if(!lines.length)lines.push(fallback);while(lines.length<expectedLines(mode))lines.push('');return lines.join('\n');}
-function firstDisplayName(value,fallback,mode){return parseNames(value,mode)[0]||fallback;}
-function refreshPlaceholders(){const mode=document.querySelector('.mode.active')?.dataset.mode||state.mode;if(mode==='Doublette'){$('nameA').placeholder='Noah / Théo';$('nameB').placeholder='Marc / Luc';}else if(mode==='Triplette'){$('nameA').placeholder='Noah / Théo / Éric';$('nameB').placeholder='Marc / Luc / Paul';}else{$('nameA').placeholder='Ex. Noah';$('nameB').placeholder='Ex. Théo';}}
-function buildPads(){for(const side of ['A','B']){const box=$('pad'+side);box.innerHTML='';for(let i=1;i<=6;i++){const b=document.createElement('button');b.className='pt';b.textContent='+'+i;b.addEventListener('click',()=>recordScore(side,i,b));box.appendChild(b);}}}
-function pulse(el,cls,ms=500){if(!el)return;el.classList.add(cls);setTimeout(()=>el.classList.remove(cls),ms);}
-function pushHistory(entry){state.history.push(entry);if(state.history.length>2)state.history=state.history.slice(-2);}
-function recordScore(side,pts,btn){const beforeA=state.scoreA,beforeB=state.scoreB;if(side==='A')state.scoreA=Math.min(13,state.scoreA+pts);else state.scoreB=Math.min(13,state.scoreB+pts);state.totalEnds=(state.totalEnds||0)+1;pushHistory({type:'score',side,pts,beforeA,beforeB,a:state.scoreA,b:state.scoreB,endNo:state.totalEnds});pulse(btn,side==='A'?'flashA':'flashB');pulse($(side==='A'?'cardA':'cardB'),'changed');render();saveLocal();checkVictory();}
-function nullEnd(){state.totalEnds=(state.totalEnds||0)+1;pushHistory({type:'null',beforeA:state.scoreA,beforeB:state.scoreB,a:state.scoreA,b:state.scoreB,endNo:state.totalEnds});render();saveLocal();}
-function undo(){if(!state.history.length)return;const last=state.history.pop();state.scoreA=last.beforeA;state.scoreB=last.beforeB;state.totalEnds=Math.max(0,(state.totalEnds||0)-1);render();saveLocal();}
-function resetGame(){if(!confirm('Réinitialiser complètement la partie ?'))return;state.scoreA=0;state.scoreB=0;state.history=[];state.totalEnds=0;state.startedAt=Date.now();state.running=true;render();saveLocal();}
-function startGame(){state.mode=document.querySelector('.mode.active').dataset.mode;state.nameA=$('nameA').value.trim()||'Joueur 1';state.nameB=$('nameB').value.trim()||'Joueur 2';state.scoreA=0;state.scoreB=0;state.history=[];state.totalEnds=0;state.startedAt=Date.now();state.running=true;saveLocal();show('game');render();}
-function checkVictory(){if(state.scoreA>=13||state.scoreB>=13){state.running=false;const winner=state.scoreA>=13?state.nameA:state.nameB;$('winnerText').textContent='Victoire '+firstDisplayName(winner,'Gagnant',state.mode);$('finalNameA').textContent=formatDisplayName(state.nameA,'Joueur 1',state.mode);$('finalNameB').textContent=formatDisplayName(state.nameB,'Joueur 2',state.mode);$('finalScoreA').textContent=state.scoreA;$('finalScoreB').textContent=state.scoreB;$('finalEnds').textContent=(state.totalEnds||0)+' mènes';$('finalTime').textContent=$('timer').textContent;show('victory');saveLocal();}}
-function saveToPhone(){const now=new Date();const lines=['PÉTANQUE SCORE','',state.mode,formatDisplayName(state.nameA,'Joueur 1',state.mode).replace(/\n/g,' / ')+' : '+state.scoreA,formatDisplayName(state.nameB,'Joueur 2',state.mode).replace(/\n/g,' / ')+' : '+state.scoreB,'Mènes : '+(state.totalEnds||0),'Durée : '+$('timer').textContent,'Date : '+now.toLocaleString('fr-BE')];const blob=new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='petanque-score-'+now.toISOString().slice(0,16).replace(/[:T]/g,'-')+'.txt';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);$('status').textContent='Enregistré sur le GSM';setTimeout(()=>{$('status').textContent='Prêt';},1800);}
-function show(id){['setup','game','victory'].forEach(x=>$(x).classList.toggle('hidden',x!==id));}
-function render(){const dispA=formatDisplayName(state.nameA,'Joueur 1',state.mode),dispB=formatDisplayName(state.nameB,'Joueur 2',state.mode);$('liveNameA').textContent=dispA;$('padNameA').textContent=dispA;$('liveNameB').textContent=dispB;$('padNameB').textContent=dispB;$('scoreA').textContent=state.scoreA;$('scoreB').textContent=state.scoreB;$('modeText').textContent=state.mode;$('endCount').textContent=(state.totalEnds||0)+((state.totalEnds||0)===1?' mène':' mènes');$('history').innerHTML='';if(!state.history.length){const e=document.createElement('div');e.className='end empty-end';e.textContent='Aucune mène';$('history').appendChild(e);}else{state.history.forEach(h=>{const e=document.createElement('div');if(h.type==='null'){e.className='end null';e.textContent='M'+h.endNo+' • nulle • '+h.a+'-'+h.b;}else{e.className='end '+(h.side==='A'?'a':'b');const n=h.side==='A'?firstDisplayName(state.nameA,'J1',state.mode):firstDisplayName(state.nameB,'J2',state.mode);e.textContent='M'+h.endNo+' • '+n+' +'+h.pts+' • '+h.a+'-'+h.b;}$('history').appendChild(e);});}}
-function formatTime(ms){const s=Math.max(0,Math.floor(ms/1000)),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return[h,m,sec].map(x=>String(x).padStart(2,'0')).join(':');}
-setInterval(()=>{if(state.running&&state.startedAt)$('timer').textContent=formatTime(Date.now()-state.startedAt);},1000);
-document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.mode').forEach(x=>x.classList.remove('active'));b.classList.add('active');refreshPlaceholders();}));
-$('startBtn').addEventListener('click',startGame);$('undoBtn').addEventListener('click',undo);$('nullBtn').addEventListener('click',nullEnd);$('saveBtn').addEventListener('click',saveToPhone);$('resetBtn').addEventListener('click',resetGame);$('rematchBtn').addEventListener('click',()=>{state.scoreA=0;state.scoreB=0;state.history=[];state.totalEnds=0;state.startedAt=Date.now();state.running=true;saveLocal();show('game');render();});$('newBtn').addEventListener('click',()=>{localStorage.removeItem(KEY);location.reload();});
-buildPads();loadLocal();refreshPlaceholders();$('status').textContent='Prêt';if(state.startedAt&&(state.running||state.scoreA||state.scoreB||(state.totalEnds||0))){if(state.scoreA>=13||state.scoreB>=13){show('victory');checkVictory();}else{show('game');render();}}if('serviceWorker'in navigator){navigator.serviceWorker.register('./service-worker.js').then(()=>{$('status').textContent='Installable • hors ligne';}).catch(()=>{$('status').textContent='Prêt';});}
-</script></body></html>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#071c34">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Pétanque Score">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <title>Pétanque Score</title>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <img src="icons/icon.svg" alt="Logo Pétanque Score">
+        <div>
+          <h1>Pétanque Score</h1>
+          <p>Simple • rapide • hors ligne</p>
+        </div>
+      </div>
+      <div class="status" id="status">Prêt</div>
+    </header>
+
+    <section id="setup" class="panel setup">
+      <h2>Nouvelle partie</h2>
+      <p class="sub">Prénoms séparés par /, , ou retour à la ligne.</p>
+
+      <div class="modes">
+        <button class="mode active" data-mode="Tête-à-tête">Tête-à-tête<br><small>1 ligne</small></button>
+        <button class="mode" data-mode="Doublette">Doublette<br><small>2 lignes</small></button>
+        <button class="mode" data-mode="Triplette">Triplette<br><small>3 lignes</small></button>
+      </div>
+
+      <div class="fields">
+        <label class="field">
+          <span class="dot blue"></span>
+          <input id="nameA" placeholder="Ex. Noah">
+        </label>
+        <label class="field">
+          <span class="dot gold"></span>
+          <input id="nameB" placeholder="Ex. Théo">
+        </label>
+      </div>
+
+      <button id="startBtn" class="primary">▶ Commencer</button>
+    </section>
+
+    <section id="game" class="panel game hidden">
+      <div class="scoreboard">
+        <div class="score-card a" id="cardA">
+          <div class="team-name" id="liveNameA">Joueur 1</div>
+          <div class="score" id="scoreA">0</div>
+        </div>
+        <div class="score-card b" id="cardB">
+          <div class="team-name" id="liveNameB">Joueur 2</div>
+          <div class="score" id="scoreB">0</div>
+        </div>
+      </div>
+
+      <div class="meta-bar">
+        <span id="modeText">Tête-à-tête</span>
+        <span>⏱ <strong id="timer">00:00:00</strong></span>
+        <span id="endCount">0 mène</span>
+      </div>
+
+      <div class="pads">
+        <div class="pad-box a">
+          <div class="pad-title" id="padNameA">Joueur 1</div>
+          <div class="points" id="padA"></div>
+        </div>
+        <div class="pad-box b">
+          <div class="pad-title" id="padNameB">Joueur 2</div>
+          <div class="points" id="padB"></div>
+        </div>
+      </div>
+
+      <div class="null-wrap">
+        <button class="action null" id="nullBtn">⊖ Mène nulle</button>
+      </div>
+
+      <div class="history compact-history">
+        <div class="history-head">
+          <span>2 dernières mènes</span>
+          <span>↶ annulable</span>
+        </div>
+        <div class="ends" id="history"></div>
+      </div>
+
+      <div class="actions">
+        <button class="action" id="undoBtn">↶ Annuler</button>
+        <button class="action save" id="saveBtn">💾 Enregistrer</button>
+        <button class="action reset" id="resetBtn">⟳ Reset</button>
+      </div>
+    </section>
+
+    <section id="victory" class="panel victory hidden">
+      <div class="cup">🏆</div>
+      <div class="victory-sub">Partie terminée</div>
+      <h2 id="winnerText">Victoire</h2>
+
+      <div class="final">
+        <div class="final-card">
+          <div class="final-name" id="finalNameA"></div>
+          <div class="final-score" id="finalScoreA"></div>
+        </div>
+        <div class="final-card">
+          <div class="final-name" id="finalNameB"></div>
+          <div class="final-score" id="finalScoreB"></div>
+        </div>
+      </div>
+
+      <div class="meta-bar victory-meta">
+        <span id="finalTime"></span>
+        <span id="finalEnds"></span>
+      </div>
+
+      <button id="rematchBtn" class="primary">↻ Revanche</button>
+      <button id="newBtn" class="action full">Nouvelle partie</button>
+    </section>
+  </div>
+
+<script>
+const KEY = 'petanqueScore.v042';
+
+let state = {
+  mode: 'Tête-à-tête',
+  nameA: '',
+  nameB: '',
+  scoreA: 0,
+  scoreB: 0,
+  history: [],
+  totalEnds: 0,
+  startedAt: null,
+  running: false
+};
+
+const $ = id => document.getElementById(id);
+
+function saveLocal() {
+  localStorage.setItem(KEY, JSON.stringify(state));
+}
+
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) state = { ...state, ...JSON.parse(raw) };
+  } catch (e) {}
+}
+
+function expectedLines(mode) {
+  if (mode === 'Doublette') return 2;
+  if (mode === 'Triplette') return 3;
+  return 1;
+}
+
+function parseNames(value, mode) {
+  return String(value || '')
+    .split(/\r?\n|\s*[\/,;|+]\s*/g)
+    .map(s => s.trim())
+    .filter(Boolean)
+    .slice(0, expectedLines(mode));
+}
+
+function formatDisplayName(value, fallback, mode) {
+  const parts = parseNames(value, mode);
+  if (!parts.length) parts.push(fallback);
+  while (parts.length < expectedLines(mode)) parts.push('');
+  return parts.join('\n');
+}
+
+function firstDisplayName(value, fallback, mode) {
+  return parseNames(value, mode)[0] || fallback;
+}
+
+function refreshPlaceholders() {
+  const mode = document.querySelector('.mode.active')?.dataset.mode || state.mode;
+  if (mode === 'Doublette') {
+    $('nameA').placeholder = 'Noah / Théo';
+    $('nameB').placeholder = 'Marc / Luc';
+  } else if (mode === 'Triplette') {
+    $('nameA').placeholder = 'Noah / Théo / Éric';
+    $('nameB').placeholder = 'Marc / Luc / Paul';
+  } else {
+    $('nameA').placeholder = 'Ex. Noah';
+    $('nameB').placeholder = 'Ex. Théo';
+  }
+}
+
+function pulse(el, cls, ms=520) {
+  if (!el) return;
+  el.classList.add(cls);
+  setTimeout(() => el.classList.remove(cls), ms);
+}
+
+function buildPads() {
+  for (const side of ['A','B']) {
+    const box = $('pad' + side);
+    box.innerHTML = '';
+    for (let i = 1; i <= 6; i++) {
+      const btn = document.createElement('button');
+      btn.className = 'pt ' + (side === 'A' ? 'pt-a' : 'pt-b');
+      btn.textContent = '+' + i;
+      btn.addEventListener('click', () => recordScore(side, i, btn));
+      box.appendChild(btn);
+    }
+  }
+}
+
+function pushHistory(entry) {
+  state.history.push(entry);
+  if (state.history.length > 2) {
+    state.history = state.history.slice(-2);
+  }
+}
+
+function recordScore(side, pts, btn) {
+  const beforeA = state.scoreA;
+  const beforeB = state.scoreB;
+
+  if (side === 'A') state.scoreA = Math.min(13, state.scoreA + pts);
+  else state.scoreB = Math.min(13, state.scoreB + pts);
+
+  state.totalEnds += 1;
+  pushHistory({
+    type: 'score',
+    side,
+    pts,
+    beforeA,
+    beforeB,
+    a: state.scoreA,
+    b: state.scoreB,
+    endNo: state.totalEnds
+  });
+
+  pulse(btn, side === 'A' ? 'flashA' : 'flashB');
+  pulse($(side === 'A' ? 'cardA' : 'cardB'), 'changed');
+  render();
+  saveLocal();
+  checkVictory();
+}
+
+function nullEnd() {
+  state.totalEnds += 1;
+  pushHistory({
+    type: 'null',
+    beforeA: state.scoreA,
+    beforeB: state.scoreB,
+    a: state.scoreA,
+    b: state.scoreB,
+    endNo: state.totalEnds
+  });
+  pulse($('nullBtn'), 'flashDark');
+  render();
+  saveLocal();
+}
+
+function undo() {
+  if (!state.history.length) return;
+  const last = state.history.pop();
+  state.scoreA = last.beforeA;
+  state.scoreB = last.beforeB;
+  state.totalEnds = Math.max(0, state.totalEnds - 1);
+  pulse($('undoBtn'), 'flashDark');
+  render();
+  saveLocal();
+}
+
+function resetGame() {
+  if (!confirm('Réinitialiser complètement la partie ?')) return;
+  state.scoreA = 0;
+  state.scoreB = 0;
+  state.history = [];
+  state.totalEnds = 0;
+  state.startedAt = Date.now();
+  state.running = true;
+  render();
+  saveLocal();
+}
+
+function saveToPhone() {
+  const now = new Date();
+  const lines = [
+    'PÉTANQUE SCORE',
+    '',
+    state.mode,
+    formatDisplayName(state.nameA, 'Joueur 1', state.mode).replace(/\n/g, ' / ') + ' : ' + state.scoreA,
+    formatDisplayName(state.nameB, 'Joueur 2', state.mode).replace(/\n/g, ' / ') + ' : ' + state.scoreB,
+    'Mènes : ' + state.totalEnds,
+    'Durée : ' + $('timer').textContent,
+    'Date : ' + now.toLocaleString('fr-BE')
+  ];
+  const blob = new Blob([lines.join('\n')], {type: 'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'petanque-score-' + now.toISOString().slice(0,16).replace(/[:T]/g,'-') + '.txt';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  $('status').textContent = 'Enregistré';
+  setTimeout(() => $('status').textContent = 'Prêt', 1500);
+}
+
+function startGame() {
+  state.mode = document.querySelector('.mode.active').dataset.mode;
+  state.nameA = $('nameA').value.trim() || 'Joueur 1';
+  state.nameB = $('nameB').value.trim() || 'Joueur 2';
+  state.scoreA = 0;
+  state.scoreB = 0;
+  state.history = [];
+  state.totalEnds = 0;
+  state.startedAt = Date.now();
+  state.running = true;
+  saveLocal();
+  show('game');
+  render();
+}
+
+function checkVictory() {
+  if (state.scoreA >= 13 || state.scoreB >= 13) {
+    state.running = false;
+    const winner = state.scoreA >= 13 ? state.nameA : state.nameB;
+    $('winnerText').textContent = 'Victoire ' + firstDisplayName(winner, 'Gagnant', state.mode);
+    $('finalNameA').textContent = formatDisplayName(state.nameA, 'Joueur 1', state.mode);
+    $('finalNameB').textContent = formatDisplayName(state.nameB, 'Joueur 2', state.mode);
+    $('finalScoreA').textContent = state.scoreA;
+    $('finalScoreB').textContent = state.scoreB;
+    $('finalTime').textContent = $('timer').textContent;
+    $('finalEnds').textContent = state.totalEnds + (state.totalEnds > 1 ? ' mènes' : ' mène');
+    show('victory');
+    saveLocal();
+  }
+}
+
+function show(id) {
+  ['setup','game','victory'].forEach(section => {
+    $(section).classList.toggle('hidden', section !== id);
+  });
+}
+
+function render() {
+  const dispA = formatDisplayName(state.nameA, 'Joueur 1', state.mode);
+  const dispB = formatDisplayName(state.nameB, 'Joueur 2', state.mode);
+
+  $('liveNameA').textContent = dispA;
+  $('liveNameB').textContent = dispB;
+  $('padNameA').textContent = dispA;
+  $('padNameB').textContent = dispB;
+  $('scoreA').textContent = state.scoreA;
+  $('scoreB').textContent = state.scoreB;
+  $('modeText').textContent = state.mode;
+  $('endCount').textContent = state.totalEnds + (state.totalEnds > 1 ? ' mènes' : ' mène');
+
+  const history = $('history');
+  history.innerHTML = '';
+
+  if (!state.history.length) {
+    const item = document.createElement('div');
+    item.className = 'end empty-end';
+    item.textContent = 'Aucune mène';
+    history.appendChild(item);
+  } else {
+    state.history.forEach(h => {
+      const item = document.createElement('div');
+      if (h.type === 'null') {
+        item.className = 'end null';
+        item.textContent = 'M' + h.endNo + ' • nulle • ' + h.a + '-' + h.b;
+      } else {
+        item.className = 'end ' + (h.side === 'A' ? 'a' : 'b');
+        const n = h.side === 'A'
+          ? firstDisplayName(state.nameA, 'J1', state.mode)
+          : firstDisplayName(state.nameB, 'J2', state.mode);
+        item.textContent = 'M' + h.endNo + ' • ' + n + ' +' + h.pts + ' • ' + h.a + '-' + h.b;
+      }
+      history.appendChild(item);
+    });
+  }
+}
+
+function formatTime(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return [h, m, sec].map(v => String(v).padStart(2, '0')).join(':');
+}
+
+setInterval(() => {
+  if (state.running && state.startedAt) {
+    $('timer').textContent = formatTime(Date.now() - state.startedAt);
+  }
+}, 1000);
+
+document.querySelectorAll('.mode').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode').forEach(x => x.classList.remove('active'));
+    btn.classList.add('active');
+    refreshPlaceholders();
+  });
+});
+
+$('startBtn').addEventListener('click', startGame);
+$('nullBtn').addEventListener('click', nullEnd);
+$('undoBtn').addEventListener('click', undo);
+$('saveBtn').addEventListener('click', saveToPhone);
+$('resetBtn').addEventListener('click', resetGame);
+$('rematchBtn').addEventListener('click', () => {
+  state.scoreA = 0;
+  state.scoreB = 0;
+  state.history = [];
+  state.totalEnds = 0;
+  state.startedAt = Date.now();
+  state.running = true;
+  saveLocal();
+  show('game');
+  render();
+});
+$('newBtn').addEventListener('click', () => {
+  localStorage.removeItem(KEY);
+  location.reload();
+});
+
+buildPads();
+loadLocal();
+refreshPlaceholders();
+$('status').textContent = 'Prêt';
+
+if (state.startedAt && (state.running || state.scoreA || state.scoreB || state.totalEnds)) {
+  if (state.scoreA >= 13 || state.scoreB >= 13) {
+    show('victory');
+    checkVictory();
+  } else {
+    show('game');
+    render();
+  }
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js')
+    .then(() => $('status').textContent = 'Installable • hors ligne')
+    .catch(() => $('status').textContent = 'Prêt');
+}
+</script>
+</body>
+</html>

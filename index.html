@@ -15,23 +15,19 @@
 <body>
   <div class="app">
     <header class="topbar">
-      <div class="topbar-glow"></div>
-      <div class="logo-banner" aria-label="Pétanque Marque Score">
-        <svg viewBox="0 0 760 230" role="img" aria-hidden="true">
-          <rect x="0" y="0" width="760" height="230" rx="34" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.20)"/>
-          <path d="M156 150 C 112 104, 116 48, 190 29 C 262 11, 338 47, 362 118" fill="none" stroke="#eef3f7" stroke-width="12" stroke-linecap="round" opacity="0.95"/>
-          <circle cx="218" cy="103" r="56" fill="#0f1721"/>
-          <circle cx="298" cy="122" r="41" fill="#8d8d90"/>
-          <path d="M174 72c44 15 82 47 110 91M179 61c0 0 -8 45 -4 85M199 55c0 0 -6 55 -2 100M223 53c0 0 0 60 6 107M153 90c34-8 80-7 122 11M144 114c42-10 97-6 143 17M256 85c9 28 16 57 20 87M276 92c6 24 11 48 14 72M280 104c28-3 57 0 82 13M272 128c25-2 51 2 74 12" fill="none" stroke="#f4f5f6" stroke-width="6" stroke-linecap="round" opacity="0.95"/>
-          <circle cx="263" cy="150" r="18" fill="#ec1717" stroke="#fff6f6" stroke-width="2"/>
-          <path d="M145 170 H 350" stroke="#9f9fa4" stroke-width="5" stroke-linecap="round"/>
-          <text x="390" y="118" fill="#f7f8fa" font-size="76" font-family="Arial, sans-serif" font-weight="500" letter-spacing="3">PÉTANQUE</text>
-          <line x1="404" y1="152" x2="462" y2="152" stroke="#1a61bc" stroke-width="8" stroke-linecap="round"/>
-          <text x="482" y="167" fill="#f7f8fa" font-size="42" font-family="Arial, sans-serif" font-weight="500" letter-spacing="2">MARQUE SCORE</text>
-          <line x1="716" y1="152" x2="744" y2="152" stroke="#1a61bc" stroke-width="8" stroke-linecap="round"/>
-        </svg>
+      <div class="header-shine"></div>
+      <div class="header-left">
+        <div class="logo-shell">
+          <img src="icons/icon.svg" alt="Logo Pétanque Score">
+        </div>
+        <div class="title-stack">
+          <h1>Pétanque Score</h1>
+          <p>Marque Score</p>
+        </div>
       </div>
-      <div class="status" id="status">Installable • hors ligne</div>
+      <div class="header-accent">
+        <span></span>
+      </div>
     </header>
 
     <section id="setup" class="panel setup">
@@ -66,7 +62,7 @@
       </div>
 
       <div class="arena">
-        <div class="team-side left-side">
+        <div class="team-side">
           <div class="score-card a" id="cardA">
             <div class="team-name" id="liveNameA">Joueur 1</div>
             <div class="score" id="scoreA">0</div>
@@ -74,7 +70,7 @@
           <div class="points" id="padA"></div>
         </div>
 
-        <div class="team-side right-side">
+        <div class="team-side">
           <div class="score-card b" id="cardB">
             <div class="team-name" id="liveNameB">Joueur 2</div>
             <div class="score" id="scoreB">0</div>
@@ -86,7 +82,7 @@
       <div class="action-grid top-actions">
         <button class="action null" id="nullBtn">⊖ Mène nulle</button>
         <button class="action" id="undoBtn">↶ Annuler</button>
-        <button class="action quit" id="quitBtn">✕ Quitter</button>
+        <button class="action save" id="saveBtn">💾 Enregistrer</button>
       </div>
 
       <div class="history">
@@ -98,7 +94,7 @@
       </div>
 
       <div class="action-grid bottom-actions">
-        <button class="action save" id="saveBtn">💾 Enregistrer</button>
+        <button class="action quit" id="quitBtn">✕ Quitter</button>
         <button class="action reset" id="resetBtn">⟳ Reset</button>
       </div>
     </section>
@@ -130,40 +126,38 @@
   </div>
 
 <script>
-const KEY = 'petanqueScore.v048';
+const KEY = 'petanqueScore.v049';
 const DEFAULT_STATE = {
-  mode: 'Tête-à-tête',
-  nameA: '',
-  nameB: '',
-  scoreA: 0,
-  scoreB: 0,
-  history: [],
-  totalEnds: 0,
-  startedAt: null,
-  running: false
+  mode:'Tête-à-tête',
+  nameA:'',
+  nameB:'',
+  scoreA:0,
+  scoreB:0,
+  history:[],
+  totalEnds:0,
+  startedAt:null,
+  running:false
 };
-let state = { ...DEFAULT_STATE };
+let state = {...DEFAULT_STATE};
 
 const $ = id => document.getElementById(id);
 
-function saveLocal() {
-  localStorage.setItem(KEY, JSON.stringify(state));
-}
+function saveLocal(){ localStorage.setItem(KEY, JSON.stringify(state)); }
 
-function loadLocal() {
+function loadLocal(){
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) state = { ...state, ...JSON.parse(raw) };
-  } catch (e) {}
+    if(raw) state = {...state, ...JSON.parse(raw)};
+  } catch(e){}
 }
 
-function expectedLines(mode) {
-  if (mode === 'Doublette') return 2;
-  if (mode === 'Triplette') return 3;
+function expectedLines(mode){
+  if(mode === 'Doublette') return 2;
+  if(mode === 'Triplette') return 3;
   return 1;
 }
 
-function parseNames(value, mode) {
+function parseNames(value, mode){
   return String(value || '')
     .split(/\r?\n|\s*[\/,;|+]\s*/g)
     .map(s => s.trim())
@@ -171,23 +165,23 @@ function parseNames(value, mode) {
     .slice(0, expectedLines(mode));
 }
 
-function formatDisplayName(value, fallback, mode) {
+function formatDisplayName(value, fallback, mode){
   const parts = parseNames(value, mode);
-  if (!parts.length) parts.push(fallback);
-  while (parts.length < expectedLines(mode)) parts.push('');
+  if(!parts.length) parts.push(fallback);
+  while(parts.length < expectedLines(mode)) parts.push('');
   return parts.join('\n');
 }
 
-function firstDisplayName(value, fallback, mode) {
+function firstDisplayName(value, fallback, mode){
   return parseNames(value, mode)[0] || fallback;
 }
 
-function refreshPlaceholders() {
+function refreshPlaceholders(){
   const mode = document.querySelector('.mode.active')?.dataset.mode || state.mode;
-  if (mode === 'Doublette') {
+  if(mode === 'Doublette'){
     $('nameA').placeholder = 'Noah / Théo';
     $('nameB').placeholder = 'Marc / Luc';
-  } else if (mode === 'Triplette') {
+  } else if(mode === 'Triplette'){
     $('nameA').placeholder = 'Noah / Théo / Éric';
     $('nameB').placeholder = 'Marc / Luc / Paul';
   } else {
@@ -196,24 +190,24 @@ function refreshPlaceholders() {
   }
 }
 
-function syncSetupFields() {
+function syncSetupFields(){
   $('nameA').value = state.nameA || '';
   $('nameB').value = state.nameB || '';
   document.querySelectorAll('.mode').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === state.mode));
   refreshPlaceholders();
 }
 
-function pulse(el, cls, ms=520) {
-  if (!el) return;
+function pulse(el, cls, ms=520){
+  if(!el) return;
   el.classList.add(cls);
   setTimeout(() => el.classList.remove(cls), ms);
 }
 
-function buildPads() {
-  for (const side of ['A','B']) {
+function buildPads(){
+  for(const side of ['A','B']){
     const box = $('pad' + side);
     box.innerHTML = '';
-    for (let i = 1; i <= 6; i++) {
+    for(let i=1;i<=6;i++){
       const btn = document.createElement('button');
       btn.className = 'pt ' + (side === 'A' ? 'pt-a' : 'pt-b');
       btn.textContent = '+' + i;
@@ -223,19 +217,19 @@ function buildPads() {
   }
 }
 
-function pushHistory(entry) {
+function pushHistory(entry){
   state.history.push(entry);
-  if (state.history.length > 2) state.history = state.history.slice(-2);
+  if(state.history.length > 2) state.history = state.history.slice(-2);
 }
 
-function recordScore(side, pts, btn) {
+function recordScore(side, pts, btn){
   const beforeA = state.scoreA;
   const beforeB = state.scoreB;
-  if (side === 'A') state.scoreA = Math.min(13, state.scoreA + pts);
+  if(side === 'A') state.scoreA = Math.min(13, state.scoreA + pts);
   else state.scoreB = Math.min(13, state.scoreB + pts);
 
   state.totalEnds += 1;
-  pushHistory({ type: 'score', side, pts, beforeA, beforeB, a: state.scoreA, b: state.scoreB, endNo: state.totalEnds });
+  pushHistory({type:'score', side, pts, beforeA, beforeB, a:state.scoreA, b:state.scoreB, endNo:state.totalEnds});
 
   pulse(btn, side === 'A' ? 'flashA' : 'flashB');
   pulse($(side === 'A' ? 'cardA' : 'cardB'), 'changed');
@@ -244,16 +238,16 @@ function recordScore(side, pts, btn) {
   checkVictory();
 }
 
-function nullEnd() {
+function nullEnd(){
   state.totalEnds += 1;
-  pushHistory({ type: 'null', beforeA: state.scoreA, beforeB: state.scoreB, a: state.scoreA, b: state.scoreB, endNo: state.totalEnds });
+  pushHistory({type:'null', beforeA:state.scoreA, beforeB:state.scoreB, a:state.scoreA, b:state.scoreB, endNo:state.totalEnds});
   pulse($('nullBtn'), 'flashDark');
   render();
   saveLocal();
 }
 
-function undo() {
-  if (!state.history.length) return;
+function undo(){
+  if(!state.history.length) return;
   const last = state.history.pop();
   state.scoreA = last.beforeA;
   state.scoreB = last.beforeB;
@@ -263,8 +257,16 @@ function undo() {
   saveLocal();
 }
 
-function resetGame() {
-  if (!confirm('Réinitialiser complètement la partie ?')) return;
+function quitGame(){
+  if(!confirm('Quitter la partie en cours ?')) return;
+  localStorage.removeItem(KEY);
+  state = {...DEFAULT_STATE, mode:state.mode};
+  syncSetupFields();
+  show('setup');
+}
+
+function resetGame(){
+  if(!confirm('Réinitialiser complètement la partie ?')) return;
   state.scoreA = 0;
   state.scoreB = 0;
   state.history = [];
@@ -275,26 +277,19 @@ function resetGame() {
   saveLocal();
 }
 
-function quitGame() {
-  if (!confirm('Quitter la partie en cours ?')) return;
-  localStorage.removeItem(KEY);
-  state = { ...DEFAULT_STATE, mode: state.mode };
-  syncSetupFields();
-  $('status').textContent = 'Prêt';
-  show('setup');
-}
-
-function saveToPhone() {
+function saveToPhone(){
   const now = new Date();
   const lines = [
-    'PÉTANQUE SCORE', '', state.mode,
+    'PÉTANQUE SCORE',
+    '',
+    state.mode,
     formatDisplayName(state.nameA, 'Joueur 1', state.mode).replace(/\n/g, ' / ') + ' : ' + state.scoreA,
     formatDisplayName(state.nameB, 'Joueur 2', state.mode).replace(/\n/g, ' / ') + ' : ' + state.scoreB,
     'Mènes : ' + state.totalEnds,
     'Durée : ' + $('timer').textContent,
     'Date : ' + now.toLocaleString('fr-BE')
   ];
-  const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+  const blob = new Blob([lines.join('\n')], {type:'text/plain;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -303,11 +298,9 @@ function saveToPhone() {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-  $('status').textContent = 'Enregistré';
-  setTimeout(() => $('status').textContent = 'Installable • hors ligne', 1500);
 }
 
-function startGame() {
+function startGame(){
   state.mode = document.querySelector('.mode.active').dataset.mode;
   state.nameA = $('nameA').value.trim() || 'Joueur 1';
   state.nameB = $('nameB').value.trim() || 'Joueur 2';
@@ -322,8 +315,8 @@ function startGame() {
   render();
 }
 
-function checkVictory() {
-  if (state.scoreA >= 13 || state.scoreB >= 13) {
+function checkVictory(){
+  if(state.scoreA >= 13 || state.scoreB >= 13){
     state.running = false;
     const winner = state.scoreA >= 13 ? state.nameA : state.nameB;
     $('winnerText').textContent = 'Victoire ' + firstDisplayName(winner, 'Gagnant', state.mode);
@@ -338,13 +331,13 @@ function checkVictory() {
   }
 }
 
-function show(id) {
+function show(id){
   ['setup','game','victory'].forEach(section => {
     $(section).classList.toggle('hidden', section !== id);
   });
 }
 
-function render() {
+function render(){
   $('liveNameA').textContent = formatDisplayName(state.nameA, 'Joueur 1', state.mode);
   $('liveNameB').textContent = formatDisplayName(state.nameB, 'Joueur 2', state.mode);
   $('scoreA').textContent = state.scoreA;
@@ -354,7 +347,7 @@ function render() {
 
   const history = $('history');
   history.innerHTML = '';
-  if (!state.history.length) {
+  if(!state.history.length){
     const item = document.createElement('div');
     item.className = 'end empty-end';
     item.textContent = 'Aucune mène';
@@ -362,12 +355,14 @@ function render() {
   } else {
     state.history.forEach(h => {
       const item = document.createElement('div');
-      if (h.type === 'null') {
+      if(h.type === 'null'){
         item.className = 'end null';
         item.textContent = 'M' + h.endNo + ' • nulle • ' + h.a + '-' + h.b;
       } else {
         item.className = 'end ' + (h.side === 'A' ? 'a' : 'b');
-        const n = h.side === 'A' ? firstDisplayName(state.nameA, 'J1', state.mode) : firstDisplayName(state.nameB, 'J2', state.mode);
+        const n = h.side === 'A'
+          ? firstDisplayName(state.nameA, 'J1', state.mode)
+          : firstDisplayName(state.nameB, 'J2', state.mode);
         item.textContent = 'M' + h.endNo + ' • ' + n + ' +' + h.pts + ' • ' + h.a + '-' + h.b;
       }
       history.appendChild(item);
@@ -375,7 +370,7 @@ function render() {
   }
 }
 
-function formatTime(ms) {
+function formatTime(ms){
   const s = Math.max(0, Math.floor(ms / 1000));
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
@@ -384,7 +379,9 @@ function formatTime(ms) {
 }
 
 setInterval(() => {
-  if (state.running && state.startedAt) $('timer').textContent = formatTime(Date.now() - state.startedAt);
+  if(state.running && state.startedAt){
+    $('timer').textContent = formatTime(Date.now() - state.startedAt);
+  }
 }, 1000);
 
 document.querySelectorAll('.mode').forEach(btn => {
@@ -398,8 +395,8 @@ document.querySelectorAll('.mode').forEach(btn => {
 $('startBtn').addEventListener('click', startGame);
 $('nullBtn').addEventListener('click', nullEnd);
 $('undoBtn').addEventListener('click', undo);
-$('quitBtn').addEventListener('click', quitGame);
 $('saveBtn').addEventListener('click', saveToPhone);
+$('quitBtn').addEventListener('click', quitGame);
 $('resetBtn').addEventListener('click', resetGame);
 $('rematchBtn').addEventListener('click', () => {
   state.scoreA = 0;
@@ -420,10 +417,9 @@ $('newBtn').addEventListener('click', () => {
 buildPads();
 loadLocal();
 syncSetupFields();
-$('status').textContent = 'Prêt';
 
-if (state.startedAt && (state.running || state.scoreA || state.scoreB || state.totalEnds)) {
-  if (state.scoreA >= 13 || state.scoreB >= 13) {
+if(state.startedAt && (state.running || state.scoreA || state.scoreB || state.totalEnds)){
+  if(state.scoreA >= 13 || state.scoreB >= 13){
     show('victory');
     checkVictory();
   } else {
@@ -432,10 +428,8 @@ if (state.startedAt && (state.running || state.scoreA || state.scoreB || state.t
   }
 }
 
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./service-worker.js')
-    .then(() => $('status').textContent = 'Installable • hors ligne')
-    .catch(() => $('status').textContent = 'Prêt');
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./service-worker.js').catch(() => {});
 }
 </script>
 </body>
